@@ -17,45 +17,9 @@ app.post("/dialogflow", express.json(), (req,res) => {
 
 let db
 var name="";var val="";var cid=0000;var myobj={};var phno=0987;
-/*
-//including bodyParser
-const bodyParser =require('body-parser');
-app.use(bodyParser.urlencoded({extended:false}));
-app.use(bodyParser.json());
-*/ 
 
-//connecting mongo to nodejs
-/*MongoClient.connect(url,(err,client)=>{
-    if(err)
-        return console.log("error is:"+ err);
-    db=client.db(dbName);           //connects db to node
+//registering the user is he isn't a registered user
 
-    console.log(`connected database: ${url}`);
-    console.log(`database: ${dbName}`);
-})*/
-
-/*app.get('/phno', function(req,res){
-    console.log("fetching data from register collection");
-    //var s=db.collection('register').find().toArray().then(result=>res.json(result));
-    var q=req.query.name;
-    if(q)
-        db.collection('register').find({'name':new RegExp(q,'i')}).toArray().then(result => res.json(result));
-    else
-        var data=db.collection('register').find({}).toArray().then(result => res.json(result));
-});
-
-app.get('/issues', function(req,res){
-    console.log("fetching data from issues collection");
-    //var s=db.collection('register').find().toArray().then(result=>res.json(result));
-    var q=req.query.name;
-    if(q)
-        db.collection('register').find({'name':new RegExp(q,'i')}).toArray().then(result => res.json(result));
-    else
-        var data=db.collection('issues').find({}).toArray().then(result => res.json(result));
-});
-
-*/
-//app.post('/register',
 async function registering(agent){
     client = new MongoClient(url);await client.connect();
     console.log("adding data to register collection");
@@ -71,6 +35,7 @@ async function registering(agent){
     custom_payload(agent);
 };
 
+// a payload of all possible complaints but user
 function custom_payload(agent)
 {   
     var payLoadData={"richContent": [   [
@@ -228,86 +193,35 @@ function custom_payload(agent)
 
 };
 
-/*app.post('/issue',function(req,res){
-    console.log("adding issue to issues collection");
-    var cid = Math.floor(Math.random() * 90000) + 10000;
-    var issue=req.body.issue;    var desc=req.body.desc;    var phno=req.body.phno;    var flag=false;
-    console.log(cid + phno+ issue +desc);    
-    db.collection('register').find({phoneno:phno},{projection:{ _id:0, name:1}}).toArray().then(result => {
-        console.log(result+ result.length);
-        try{
-            if(result.length==0){
-                throw ("Looks like you are not registered. Please enter your name");
-        } 
-            else{
-            var obj={cid:cid,phoneno:phno, name:result[0].name, issue: issue, description:desc, status:"Active"}
-            db.collection('issues').insertOne(obj, function(err, res) {
-                if (err) {
-                    throw (err);
-            }
-                else
-                console.log("1 document inserted");
-            });  
-        }
-    }
-            catch(e){
-                flag=true;
-                console.log("please register "+ e+ flag);
-            };
-    console.log(flag);
-    if(flag==true)
-        res.send("register yourself");
-    else
-        res.send("your issue has been registered");
-    });
-    
-});
-*/
-/*function yn(agent){
-        var choice=agent.parameters.
-}*/
+// if a user is registered getting their phone number
 async function yes(agent){
     client = new MongoClient(url);await client.connect();
     console.log("adding issue to issues collection");
-   // var cid = Math.floor(Math.random() * 90000) + 10000;
     phno=agent.parameters.phno;    var flag=false;
     console.log(phno);    
     await client.db("complaints").collection('register').find({phoneno:phno},{projection:{ _id:0, name:1}}).toArray().then(result => {
         console.log(result+ result.length);
         try{
             if(result.length==0){
-                agent.add ("Looks like you entered wrong phone number. please retry");
+                throw ("Looks like you entered wrong phone number. please retry");
         } 
-            else{
-               // agent.add("Welcome  "+result[0].name);
-           /* var obj={cid:cid,phoneno:phno, name:result[0].name, issue: issue, description:desc, status:"Active"}
-            db.collection('issues').insertOne(obj, function(err, res) {
-                if (err) {
-                    throw (err);
-            }
-                else
-                console.log("1 document inserted");
-            });  */
-
-                    name=result[0].name;
-                    //console.log(name);
+            else{              
+            name=result[0].name;                   
             custom_payload(agent);
             console.log("payload being sent to dialogflow");
             agent.add(new Payload(agent.UNSPECIFIED,payLoadData,{sendAsMessage:true, rawPayload:true }));
-
-
         }
     }
             catch(e){
                 flag=true;
-                // agent.add(e);
+                    agent.add(e);
             };
     console.log(flag);
     });
     
 };
 
-	
+//getting the issue number from list 	
 function report_issue(agent)
 {
  
@@ -347,87 +261,7 @@ function report_issue(agent)
  agent.add("Thank you "+name+"\nThe issue reported is: "+ val +"\nComplaint ID is: "+cid);
 }
 
-function description(agent){
-    desc=agent.parameters.des;
-    
-        console.log("updating data of ventilators collection");
-        var p={phoneno:phno};
-        des={$set: {description:desc}};
-        db("complaints").collection('ventilators').updateOne(p,des,function(err,res){
-            console.log("updated");
-        });
-        //db.collection('ventilators').find().toArray().then(result => res.send(result));
-       // res.send("data updated");
-       agent.add("Thank you "+name+"\nThe issue reported is: "+ val +"\nComplaint ID is: "+cid+"\nDescription:"+ desc);
-    
-}
-/*
-app.post('/issue',function(req,res){
-    console.log("adding issue to issues collection");
-    var cid = Math.floor(Math.random() * 90000) + 10000;
-    var issue=req.body.issue;    var desc=req.body.desc;    var phno=req.body.phno;    var flag=false;
-    console.log(cid + phno+ issue +desc);    
-    db.collection('register').find({phoneno:phno},{projection:{ _id:0, name:1}}).toArray().then(result => {
-        console.log(result+ result.length);
-        try{
-            if(result.length==0){
-                throw ("Looks like you are not registered. Please enter your name");
-        } 
-            else{
-            var obj={cid:cid,phoneno:phno, name:result[0].name, issue: issue, description:desc, status:"Active"}
-            db.collection('issues').insertOne(obj, function(err, res) {
-                if (err) {
-                    throw (err);
-            }
-                else
-                console.log("1 document inserted");
-            });  
-        }
-    }
-            catch(e){
-                flag=true;
-                console.log("please register "+ e+ flag);
-            };
-    console.log(flag);
-    if(flag==true)
-        res.send("register yourself");
-    else
-        res.send("your issue has been registered");
-    });
-    
-});
-
-
-*/
-
-
-/*app.get('/status',function(req,res){
-    console.log("checking status of your complaint");
-    var phno=req.query.phno; var flag=false;
-    console.log(phno);    
-    db.collection('issues').find({phoneno:phno},{projection:{ _id:0, issue:1 , description:1, cid:1, status:1}}).toArray().then(result => {
-        console.log(result);
-        try{
-            if(result.length==0){
-                throw ("no issue found");
-            } 
-            else{
-            //var obj={cid:cid,phoneno:phno, issue: issue, description:desc, status:status}
-            res.json(result)
-              
-            }
-        }
-        catch(e){
-                flag=true;
-                console.log("no issues "+ e+ flag);
-            };
-    console.log(flag);
-    if(flag==true)
-        res.send("no issues found");
-    });
-    
-});*/
-
+//mapping dialogflow intents to JS functions
 var intentMap = new Map();
 intentMap.set("number", yes);
 intentMap.set("number - custom", report_issue);
@@ -436,5 +270,5 @@ intentMap.set("lodging - no - custom-2", report_issue);
 agent.handleRequest(intentMap);
 
 });
+//creating a port to listen
 app.listen(process.env.PORT || 8000);
-//app.listen(3005);
