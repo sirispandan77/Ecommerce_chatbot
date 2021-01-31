@@ -203,7 +203,7 @@ async function yes(agent){
         console.log(result+ result.length);
         try{
             if(result.length==0){
-                throw ("Looks like you entered wrong phone number. please retry");
+                agent.add ("Looks like you entered wrong phone number. please retry");
         } 
             else{              
             name=result[0].name;                   
@@ -214,7 +214,7 @@ async function yes(agent){
     }
             catch(e){
                 flag=true;
-                    agent.add(e);
+                    //agent.add(e);
             };
     console.log(flag);
     });
