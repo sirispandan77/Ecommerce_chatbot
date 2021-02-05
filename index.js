@@ -221,6 +221,32 @@ async function yes(agent){
     
 };
 
+async function details(agent){
+    client = new MongoClient(url);await client.connect();
+    console.log("getting details");
+    var num=agent.parameters.id;   
+    console.log(num);    
+    await client.db("complaints").collection('issues').find({cid:num},{projection:{ _id:0, issue:1,status:1,time_date:1}}).toArray().then(result => {
+        console.log(result+ result.length);
+        try{
+            if(result.length==0){
+                agent.add ("Looks like you entered wrong complaint ID. please retry");
+        } 
+            else{              
+            //name=result[0].name;                   
+            console.log("details being sent to dialogflow");
+            agent.add("Thank you "+"\nThe issue reported is: "+ result[0].issue +"\nComplaint ID is: "+ num+ "\nStatus:"+  result[0].status+"\ntime & date:"+ result[0].time_date);
+        }
+    }
+            catch(e){
+                
+                    //agent.add(e);
+            };
+   
+    });
+    
+};
+
 //getting the issue number from list 	
 function report_issue(agent)
 {
@@ -232,7 +258,7 @@ function report_issue(agent)
    var val=issue_vals[intent_val];
    console.log("repoting issue");
    cid = Math.floor(Math.random() * 90000) + 10000;
-
+    var status="Active";
   //Generating trouble ticket and storing it in Mongodb
   //Using random module
   MongoClient.connect(url, function(err, db) {
@@ -240,7 +266,7 @@ function report_issue(agent)
   var dbo = db.db("complaints");
       
     var issue_val=  val; 
-    var status="Active";
+     status="Active";
     console.log("issue reported"+ val);
 	let ts = Date.now();
     let date_ob = new Date(ts);
@@ -250,7 +276,7 @@ function report_issue(agent)
 
     var time_date=year + "-" + month + "-" + date;
 
-	 myobj = { issue:issue_val,status:status,time_date:time_date,cid:cid };
+	 myobj = { issue:val,status:status,time_date:time_date,cid:cid };
 
     dbo.collection("issues").insertOne(myobj, function(err, res) {
     if (err) throw err;
@@ -258,7 +284,7 @@ function report_issue(agent)
     });
 });
     console.log(name+" name is ");
- agent.add("Thank you "+name+"\nThe issue reported is: "+ val +"\nComplaint ID is: "+cid);
+ agent.add("Thank you "+name+"\nThe issue reported is: "+ val +"\nComplaint ID is: "+cid+ "\nStatus:"+ status);
 }
 
 //mapping dialogflow intents to JS functions
@@ -267,6 +293,7 @@ intentMap.set("number", yes);
 intentMap.set("number - custom", report_issue);
 intentMap.set("lodging - no - custom", registering);
 intentMap.set("lodging - no - custom-2", report_issue);
+intentMap.set("details - custom", details);
 agent.handleRequest(intentMap);
 
 });
